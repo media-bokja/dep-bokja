@@ -1,0 +1,19 @@
+{
+  "name": "media-bokja/dep-bojka",
+  "license": "GPL-2.0-or-later",
+  "autoload": {
+  },
+  "authors": [
+    {
+      "name": "changwoo",
+      "email": "ep6tri@hotmail.com"
+    }
+  ],
+  "require-dev": {
+    "deployer/deployer": "^7.5",
+    "vlucas/phpdotenv": "^5.6"
+  },
+  "scripts": {
+    "dep": "vendor/bin/dep"
+  }
+}
