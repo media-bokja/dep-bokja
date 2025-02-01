@@ -1,7 +1,9 @@
 <?php
+/** @noinspection PhpUnhandledExceptionInspection */
 
 namespace Deployer;
 
+use Deployer\Exception\RunException;
 use Dotenv\Dotenv;
 
 require_once __DIR__ . '/vendor/autoload.php';
@@ -63,24 +65,36 @@ function downloadFromHost(string $src, string $dst): void
     runLocally('scp {{remote_user}}@{{remote_host}}:' . $src . ' ' . $dst);
 }
 
-// Hooks
-task('db:dump', function () {
-    $root = get('remote_store');
-    if (!test("[ -d $root ]")) {
-        run("mkdir -p $root");
+/**
+ * 로컬 디렉토리 여부를 체크하고 없다면 만든다.
+ *
+ * @param string $dir
+ * @param int    $perm
+ *
+ * @return void
+ * @throws RunException
+ */
+function checkLocalDir(string $dir, int $perm = 0755): void
+{
+    if (!testLocally("[ -d \"$dir\" ]")) {
+        runLocally("mkdir -pv \"$dir\" --mode=\"$perm\"");
     }
-    run("mysqldump -u'{{remote_db_user}}' -p'{{remote_db_pass}}' '{{remote_db_name}}' | gzip -9 > '{{remote_store}}/brotherhood.sql.gz'");
-})->desc('원격 데이터베이스를 덤프합니다.');
+}
 
-task('db:download', function () {
-    if (!test("[ -f {{remote_store}}/brotherhood.sql.gz ]")) {
-        error('Remote .sq.gz file not found.');
+function checkRemoteFile(string $path): void
+{
+    if (!test("[ -f \"$path\" ]")) {
+        error("Remote file '$path' not found.");
     }
-    if (!testLocally("[ -d {{local_store}} ]")) {
-        runLocally("mkdir -p {{local_store}}");
+}
+
+function checkRemoteDir(string $dir, int $perm = 0755): void
+{
+    if (!test("[ -d \"$dir\" ]")) {
+        run("mkdir -pv \"$dir\" --mode=\"$perm\"");
     }
-    downloadFromHost(
-        src: "{{remote_store}}/brotherhood.sql.gz",
-        dst: "{{local_store}}/brotherhood.sql.gz",
-    );
-})->desc('덩프돤 .sql.gz 파일을 로컬로 다운로드 받습니다.');
+}
+
+require_once __DIR__ . '/tasks/db.php';
+require_once __DIR__ . '/tasks/plugin.php';
+require_once __DIR__ . '/tasks/theme.php';
